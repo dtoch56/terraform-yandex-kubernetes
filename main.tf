@@ -1,6 +1,7 @@
 resource "yandex_kms_symmetric_key" "k8s" {
   count = var.kms_provider_key_id == null ? 1 : 0
 
+  folder_id         = var.folder_id
   name              = "${var.name}-key"
   description       = "${var.name} cluster symmetric key"
   default_algorithm = var.kms_algorithm
@@ -32,9 +33,10 @@ locals {
 }
 
 resource "yandex_iam_service_account" "service_account" {
-  count = local.service_account_name == null ? 0 : 1
+  count     = local.service_account_name == null ? 0 : 1
 
-  name = var.service_account_name
+  folder_id = local.folder_id
+  name      = var.service_account_name
 }
 
 locals {
@@ -57,9 +59,10 @@ locals {
 }
 
 resource "yandex_iam_service_account" "node_service_account" {
-  count = local.node_service_account_exists ? 0 : 1
+  count     = local.node_service_account_exists ? 0 : 1
 
-  name = local.node_service_account_name
+  folder_id = var.folder_id
+  name      = local.node_service_account_name
 }
 
 locals {

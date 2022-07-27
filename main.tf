@@ -1,4 +1,15 @@
+resource "yandex_kms_symmetric_key" "k8s" {
+  count = var.kms_provider_key_id == null ? 1 : 0
+
+  name              = "${var.name}-key"
+  description       = "${var.name} cluster symmetric key"
+  default_algorithm = var.kms_algorithm
+  rotation_period   = var.kms_rotation_period
+}
+
 locals {
+  kms_key_id = var.kms_provider_key_id == null ? yandex_kms_symmetric_key.k8s[0].id : var.kms_provider_key_id
+
   master_regions = length(var.master_locations) > 1 ? [{
     region    = var.master_region
     locations = var.master_locations
@@ -80,7 +91,7 @@ resource "yandex_kubernetes_cluster" "cluster" {
   network_policy_provider  = var.network_policy_provider
 
   dynamic "kms_provider" {
-    for_each = var.kms_provider_key_id == null ? [] : [var.kms_provider_key_id]
+    for_each = local.kms_key_id == null ? [] : [local.kms_key_id]
 
     content {
       key_id = kms_provider.value

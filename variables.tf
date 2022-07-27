@@ -118,11 +118,6 @@ variable "network_policy_provider" {
   default = null
 }
 
-variable "kms_provider_key_id" {
-  description = "KMS key ID."
-  default = null
-}
-
 variable "master_version" {
   description = "Version of Kubernetes that will be used for master."
   type = string
@@ -222,4 +217,21 @@ variable "node_groups_locations" {
     zone      = string
   })))
   default = {}
+}
+
+# Encryption key for Kubernetes Cluster
+# Yandex KMS symmetric key to encrypt important information, such as passwords, OAuth tokens, and SSH keys (called secrets).
+variable "kms_algorithm" {
+  description = "Encryption algorithm to be used with a new key version, generated with the next rotation."
+  default = "AES_128"
+}
+
+variable "kms_rotation_period" {
+  description = "Interval between automatic rotations."
+  default = "8760h" // equal to 1 year"
+}
+
+variable "kms_provider_key_id" {
+  description = "Existing KMS key ID. If omitted, a new one will be created, according to the parameters above."
+  default = null
 }

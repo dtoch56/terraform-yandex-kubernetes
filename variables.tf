@@ -235,3 +235,22 @@ variable "kms_provider_key_id" {
   description = "Existing KMS key ID. If omitted, a new one will be created, according to the parameters above."
   default = null
 }
+
+# Security Groups
+variable "default_security_groups" {
+  description = "Create default security groups"
+  type = bool
+  default = true
+}
+
+variable "vpn_ips" {
+  description = "List of VPN IPs to access k8s cluster"
+  type = list(string)
+  default = []
+}
+
+variable "local_subnet_ranges" {
+  description = ""
+  type = list(string)
+  default = []
+}

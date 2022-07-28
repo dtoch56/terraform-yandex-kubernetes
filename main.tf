@@ -1,24 +1,10 @@
-resource "yandex_kms_symmetric_key" "k8s" {
-  count = var.kms_provider_key_id == null ? 1 : 0
-
-  folder_id         = var.folder_id
-  name              = "${var.name}-key"
-  description       = "${var.name} cluster symmetric key"
-  default_algorithm = var.kms_algorithm
-  rotation_period   = var.kms_rotation_period
-}
-
 locals {
-  kms_key_id = var.kms_provider_key_id == null ? yandex_kms_symmetric_key.k8s[0].id : var.kms_provider_key_id
-
   master_regions = length(var.master_locations) > 1 ? [{
     region    = var.master_region
     locations = var.master_locations
   }] : []
 
   master_locations = length(var.master_locations) > 1 ? [] : var.master_locations
-
-  service_account_name = var.service_account_id == null ? var.service_account_name : null
 
   common_ssh_keys_metadata = length(var.node_groups_default_ssh_keys) > 0 ? {
     ssh-keys = join("\n", flatten([
@@ -30,53 +16,13 @@ locals {
   } : {}
 
   node_groups_default_locations = coalesce(var.node_groups_default_locations, var.master_locations)
+
+  master_security_group_ids = var.default_security_groups == true ? setunion([
+          yandex_vpc_security_group.k8s-master-whitelist[0].id,
+          yandex_vpc_security_group.k8s-main[0].id
+      ], var.master_security_group_ids) : var.master_security_group_ids
 }
 
-resource "yandex_iam_service_account" "service_account" {
-  count     = local.service_account_name == null ? 0 : 1
-
-  folder_id = local.folder_id
-  name      = var.service_account_name
-}
-
-locals {
-  service_account_id = try(yandex_iam_service_account.service_account[0].id, var.service_account_id)
-}
-
-resource "yandex_resourcemanager_folder_iam_member" "service_account" {
-  count = local.service_account_name == null ? 0 : 1
-
-  folder_id = var.folder_id
-
-  role   = "editor"
-  member = "serviceAccount:${local.service_account_id}"
-}
-
-locals {
-  node_service_account_name = var.node_service_account_id == null ? var.node_service_account_name : null
-
-  node_service_account_exists = local.node_service_account_name == null || var.service_account_name == var.node_service_account_name
-}
-
-resource "yandex_iam_service_account" "node_service_account" {
-  count     = local.node_service_account_exists ? 0 : 1
-
-  folder_id = var.folder_id
-  name      = local.node_service_account_name
-}
-
-locals {
-  node_service_account_id = try(yandex_iam_service_account.node_service_account[0].id, local.node_service_account_exists ? coalesce(var.node_service_account_id, local.service_account_id) : null)
-}
-
-resource "yandex_resourcemanager_folder_iam_member" "node_service_account" {
-  count = (local.node_service_account_name == null) || (var.service_account_name == var.node_service_account_name) ? 0 : 1
-
-  folder_id = var.folder_id
-
-  role   = "container-registry.images.puller"
-  member = "serviceAccount:${local.node_service_account_id}"
-}
 
 resource "yandex_kubernetes_cluster" "cluster" {
   name                     = var.name
@@ -104,7 +50,7 @@ resource "yandex_kubernetes_cluster" "cluster" {
   master {
     version            = var.master_version
     public_ip          = var.master_public_ip
-    security_group_ids = var.master_security_group_ids
+    security_group_ids = local.master_security_group_ids
 
     maintenance_policy {
       auto_upgrade = var.master_auto_upgrade
@@ -148,7 +94,9 @@ resource "yandex_kubernetes_cluster" "cluster" {
   }
 
   // to keep permissions of service account on destroy until cluster will be destroyed
-  depends_on = [yandex_resourcemanager_folder_iam_member.service_account]
+  depends_on = [
+    yandex_resourcemanager_folder_iam_member.service_account
+  ]
 }
 
 resource "yandex_kubernetes_node_group" "node_groups" {

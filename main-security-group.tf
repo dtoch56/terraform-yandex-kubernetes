@@ -60,14 +60,14 @@ resource "yandex_vpc_security_group" "k8s-master-whitelist" {
   ingress {
     protocol       = "TCP"
     description    = "To access the Kubernetes API and manage clusters"
-    v4_cidr_blocks = var.vpn_ips
+    v4_cidr_blocks = setunion(var.vpn_ips, var.local_subnet_ranges, [var.cluster_ipv4_range])
     port           = 6443
   }
 
   ingress {
     protocol       = "TCP"
     description    = "To access the Kubernetes API and manage clusters"
-    v4_cidr_blocks = var.vpn_ips
+    v4_cidr_blocks = setunion(var.vpn_ips, var.local_subnet_ranges, [var.cluster_ipv4_range])
     port           = 443
   }
 }

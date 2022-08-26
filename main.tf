@@ -18,9 +18,9 @@ locals {
   node_groups_default_locations = coalesce(var.node_groups_default_locations, var.master_locations)
 
   master_security_group_ids = var.default_security_groups == true ? setunion([
-          yandex_vpc_security_group.k8s-master-whitelist[0].id,
-          yandex_vpc_security_group.k8s-main[0].id
-      ], var.master_security_group_ids) : var.master_security_group_ids
+    yandex_vpc_security_group.k8s-master-whitelist[0].id,
+    yandex_vpc_security_group.k8s-main[0].id
+  ], var.master_security_group_ids) : var.master_security_group_ids
 }
 
 

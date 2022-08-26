@@ -4,14 +4,13 @@ Creates a Kubernetes Cluster in Yandex.Cloud.
 
 ## Basic example
 
-To create a folder named `my-folder` in Yandex.Cloud with id `xxx000xxx000xxx000xx`:
+To create a Kubernetes cluster named `my-k8s` in Yandex.Cloud with folder id `xxx000xxx000xxx000xx`:
 
 ```hcl
-module "folder" {
-  source  = "dtoch56/kubernetes/yandex"
-
-  cloud_id    = "xxx000xxx000xxx000xx"
-  folder_name = "my-folder"
+module "kubernetes" {
+  source       = "dtoch56/kubernetes/yandex"
+  folder_id    = "xxx000xxx000xxx000xx"
+  name         = "my-k8s-cluster"
 }
 ```
 

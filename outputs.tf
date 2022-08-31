@@ -41,3 +41,10 @@ output "node_service_account_id" {
   EOF
   value       = local.node_service_account_id
 }
+
+output "ingress_ips" {
+  description = "IPs form kubernetes ingress controllers"
+  value       = tomap({
+    for addr in yandex_vpc_address.addr : addr.name => addr.external_ipv4_address[0].address
+  })
+}

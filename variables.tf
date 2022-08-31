@@ -243,7 +243,7 @@ variable "default_security_groups" {
   default     = true
 }
 
-variable "vpn_ips" {
+variable "whitelist_ips" {
   description = "List of VPN IPs to access k8s cluster"
   type        = list(string)
   default     = []
@@ -253,4 +253,14 @@ variable "local_subnet_ranges" {
   description = ""
   type        = list(string)
   default     = []
+}
+
+variable "ingress_ips" {
+  description = "List of static IPs to create for Kubernetes ingress controllers"
+  type = map(object({
+    zone            = string
+    description     = string
+    ddos_protection = bool
+  }))
+  default = {}
 }
